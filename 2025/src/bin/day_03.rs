@@ -1,5 +1,8 @@
 use anyhow::Context;
 
+/// Calculate the total joltage of a bank of digits. The "joltage" for a single bank is the maximum
+/// value obtained by selecting two digits from the bank combining them into a single number,
+/// respecting the order of the digits in the bank.
 fn total_joltage(contents: &str) -> anyhow::Result<usize> {
     // > the joltage that the bank produces is equal to the number formed by the digits on the
     // > batteries you've turned on
@@ -69,9 +72,10 @@ fn total_joltage_select_k(contents: &str, k: usize) -> anyhow::Result<usize> {
 
         let digits: Vec<char> = bank.chars().collect();
         let mut remaining = len - k;
-        let mut stack: Vec<char> = Vec::new(); // monotonic stack
+        let mut stack: Vec<char> = Vec::new(); // pseudo-monotonic stack
         for &digit in &digits {
             while remaining > 0 && !stack.is_empty() && stack.last().unwrap() < &digit {
+                // found better character and still have budget to remove
                 stack.pop();
                 remaining -= 1;
             }
