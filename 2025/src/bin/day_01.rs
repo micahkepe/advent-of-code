@@ -1,3 +1,4 @@
+use anyhow::Context;
 use std::io::{BufRead, BufReader};
 
 fn position_change(input: &str) -> anyhow::Result<isize> {
@@ -8,11 +9,9 @@ fn position_change(input: &str) -> anyhow::Result<isize> {
         Some(_) | None => return Err(anyhow::anyhow!("unexpected input line: {}", input)),
     };
 
-    let change: isize = match input.chars().skip(1).collect::<String>().parse() {
-        Ok(c) => c,
-        Err(e) => return Err(anyhow::anyhow!("{}", e)),
-    };
-
+    let change: isize = input[1..]
+        .parse()
+        .with_context(|| format!("Invalid number in input: {}", input))?;
     Ok(change * sign)
 }
 
