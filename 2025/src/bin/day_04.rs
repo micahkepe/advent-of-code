@@ -9,7 +9,7 @@ const DIRS: [(i32, i32); 8] = [
     (1, -1),
 ];
 
-fn count_forklift_accessible(contents: &str) -> anyhow::Result<usize> {
+fn construct_occupied(contents: &str) -> anyhow::Result<Vec<Vec<bool>>> {
     let rows: i32 = contents.trim().lines().count() as i32;
     let cols: i32 = contents.lines().next().unwrap().trim().chars().count() as i32;
     let mut occupied: Vec<Vec<bool>> = vec![vec![false; cols as usize]; rows as usize];
@@ -28,7 +28,12 @@ fn count_forklift_accessible(contents: &str) -> anyhow::Result<usize> {
         }
     }
 
-    let mut count = 0;
+    Ok(occupied)
+}
+
+fn find_forklift_accessible(occupied: &[Vec<bool>]) -> anyhow::Result<Vec<(usize, usize)>> {
+    let (rows, cols) = (occupied.len() as i32, occupied[0].len() as i32);
+    let mut indices: Vec<(usize, usize)> = Vec::new();
     for r in 0..rows {
         for c in 0..cols {
             if !occupied[r as usize][c as usize] {
@@ -45,19 +50,46 @@ fn count_forklift_accessible(contents: &str) -> anyhow::Result<usize> {
                 }
             }
             if surrounding_count < 4 {
-                count += 1;
+                indices.push((r as usize, c as usize))
             }
         }
     }
 
-    Ok(count)
+    Ok(indices)
 }
+
+fn find_accessible_iterative(mut occupied: Vec<Vec<bool>>) -> anyhow::Result<usize> {
+    let indices = find_forklift_accessible(&occupied)?;
+    let mut last_found = indices.len();
+    for (r, c) in indices.iter() {
+        occupied[*r][*c] = false
+    }
+    let mut total_count = last_found;
+
+    // iterative fixpoint
+    while last_found != 0 {
+        let indices = find_forklift_accessible(&occupied)?;
+        for (r, c) in indices.iter() {
+            occupied[*r][*c] = false
+        }
+        last_found = indices.len();
+        total_count += last_found
+    }
+
+    Ok(total_count)
+}
+
 fn main() -> anyhow::Result<()> {
     let contents = std::fs::read_to_string("./data/day-04-input.txt")?;
 
     /* Part 1 */
-    let count = count_forklift_accessible(&contents)?;
-    println!("Part 1: {}", count);
+    let occupied = construct_occupied(&contents)?;
+    let indices = find_forklift_accessible(&occupied)?;
+    println!("Part 1: {}", indices.len());
+
+    /* Part 2 */
+    let total_iterative = find_accessible_iterative(occupied)?;
+    println!("Part 2: {}", total_iterative);
 
     Ok(())
 }
@@ -78,6 +110,23 @@ mod test {
 @.@@@.@@@@
 .@@@@@@@@.
 @.@.@@@.@.";
-        assert_eq!(count_forklift_accessible(input).unwrap(), 13);
+        let occupied = construct_occupied(input).unwrap();
+        assert_eq!(find_forklift_accessible(&occupied).unwrap().len(), 13);
+    }
+
+    #[test]
+    fn test_part2_example() {
+        let input = "..@@.@@@@.
+@@@.@.@.@@
+@@@@@.@.@@
+@.@@@@..@.
+@@.@@@@.@@
+.@@@@@@@.@
+.@.@.@.@@@
+@.@@@.@@@@
+.@@@@@@@@.
+@.@.@@@.@.";
+        let occupied = construct_occupied(input).unwrap();
+        assert_eq!(find_accessible_iterative(occupied).unwrap(), 43);
     }
 }
