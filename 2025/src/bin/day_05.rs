@@ -125,6 +125,11 @@ fn main() -> anyhow::Result<()> {
     let fresh_ids = find_fresh_ids(&parsed)?;
     println!("Part 1: {}", fresh_ids.len());
 
+    /* Part 2 */
+    let merged_intervals = merge_intervals(&parsed.ranges)?;
+    let total_fresh_ids: usize = merged_intervals.iter().map(|int| int.clone().count()).sum();
+    println!("Part 2: {}", total_fresh_ids);
+
     Ok(())
 }
 
