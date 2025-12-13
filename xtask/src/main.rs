@@ -16,6 +16,8 @@ fn main() -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     #[test]
     fn test_part1_example() {
         todo!();
