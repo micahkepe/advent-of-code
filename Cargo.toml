@@ -1,0 +1,4 @@
+[workspace]
+members = ["xtask", "2024", "2025"]
+resolver = "3"
+
