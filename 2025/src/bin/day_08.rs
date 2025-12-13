@@ -20,9 +20,40 @@ impl Position {
     ///
     /// See: https://en.wikipedia.org/wiki/Euclidean_distance
     fn euclidean_distance(self, other: &Position) -> f64 {
-        (((self.x - other.x).pow(2) + (self.y - other.y).pow(2) + (self.z - other.z).pow(2)) as f64)
-            .sqrt()
+        let dx = self.x as f64 - other.x as f64;
+        let dy = self.y as f64 - other.y as f64;
+        let dz = self.z as f64 - other.z as f64;
+        (dx * dx + dy * dy + dz * dz).sqrt()
     }
+}
+
+#[derive(Debug)]
+struct Edge {
+    source: usize,
+    target: usize,
+    dist: f64,
+}
+
+/// Naive O(n ^ 2) build edges, could make this more efficient but ¯\_(ツ)_/¯
+///
+/// Optimization with k-d trees: https://en.wikipedia.org/wiki/K-d_tree
+fn build_edges(junctions: &[Junction]) -> Vec<Edge> {
+    let mut edges = Vec::new();
+    for i in 0..junctions.len() {
+        for j in (i + 1)..junctions.len() {
+            let dist = junctions[i]
+                .position
+                .euclidean_distance(&junctions[j].position);
+            edges.push(Edge {
+                source: i,
+                target: j,
+                dist,
+            });
+        }
+    }
+    // sort by distance in ascending order
+    edges.sort_by(|e1, e2| e1.dist.partial_cmp(&e2.dist).unwrap());
+    edges
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -52,41 +83,92 @@ impl FromStr for Junction {
     }
 }
 
-/// Graph
-///
-/// Graphs in Rust: <https://smallcultfollowing.com/babysteps/blog/2015/04/06/modeling-graphs-in-rust-using-vector-indices/>
 #[derive(Debug)]
-struct Graph {}
-
-impl Graph {}
-
-fn construct_connected_graph(_junctions: &[Junction]) -> Graph {
-    Graph {}
+/// Disjoint set union over the junction nodes.
+///
+/// Invariant: only roots represent components
+struct DisjointSetUnion {
+    /// parent[i] -> idx of parent of node i
+    parent: Vec<usize>,
+    /// size[i] -> size of the node i's component
+    size: Vec<usize>,
 }
 
-fn part1(contents: &str) -> anyhow::Result<usize> {
+impl DisjointSetUnion {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(), // initially disjoint union of all n nodes
+            size: vec![1; n],         // all nodes initially disjoint
+        }
+    }
+
+    /// Find the component that contains node `x`.
+    fn find(&mut self, x: usize) -> usize {
+        if self.parent[x] != x {
+            // PERF: flatten trees for amortized log finds
+            self.parent[x] = self.find(self.parent[x]);
+        }
+        self.parent[x]
+    }
+
+    /// Connect the components containing nodes `a` and `b`.
+    fn union(&mut self, a: usize, b: usize) -> bool {
+        let mut root_a = self.find(a);
+        let mut root_b = self.find(b);
+        // check if already connected
+        if root_a == root_b {
+            return false;
+        }
+
+        // Invariant: root_a is root of larger tree
+        // NOTE: this only affects local variables, not the DSU arrays
+        if self.size[root_a] < self.size[root_b] {
+            std::mem::swap(&mut root_a, &mut root_b);
+        }
+
+        // PERF: attach smaller tree under the larger one
+        self.parent[root_b] = root_a;
+        self.size[root_a] += self.size[root_b];
+        true
+    }
+}
+
+fn part1(contents: &str, target_connections: usize) -> anyhow::Result<usize> {
     let junctions: Vec<Junction> = contents
         .trim()
         .lines()
         .map(str::parse)
         .collect::<anyhow::Result<_>>()?;
 
-    //#[cfg(test)]
-    //println!("{:?}", junctions);
+    #[cfg(test)]
+    println!("{:?}", junctions);
 
-    // TODO: construct graph
+    let edges = build_edges(&junctions);
+    let mut dsu = DisjointSetUnion::new(junctions.len());
+    let mut edges_used = 0;
+    for edge in edges {
+        edges_used += 1;
+        if dsu.union(edge.source, edge.target) && edges_used == target_connections {
+            break;
+        }
+    }
 
-    // TODO: find components and their sizes
+    // component_size[i] -> size of component
+    let mut component_size = vec![0; junctions.len()];
+    (0..junctions.len()).for_each(|i| {
+        let root = dsu.find(i);
+        component_size[root] += 1;
+    });
+    component_size.sort_by(|a, b| b.cmp(a)); // sort descending
 
-    // TODO: sum sizes of top 3 largest components
-    Ok(0)
+    Ok(component_size[0] * component_size[1] * component_size[2])
 }
 
 fn main() -> anyhow::Result<()> {
     let contents = std::fs::read_to_string("./data/day-08-input.txt")?;
 
     /* Part 1 */
-    let component_size_sum = part1(&contents)?;
+    let component_size_sum = part1(&contents, 1000)?;
     println!("Part 1: {}", component_size_sum);
     Ok(())
 }
@@ -118,6 +200,6 @@ mod test {
 862,61,35
 984,92,344
 425,690,689";
-        assert_eq!(part1(input).unwrap(), 40)
+        assert_eq!(part1(input, 10).unwrap(), 40)
     }
 }
