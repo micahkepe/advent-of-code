@@ -140,9 +140,6 @@ fn part1(contents: &str, target_connections: usize) -> anyhow::Result<usize> {
         .map(str::parse)
         .collect::<anyhow::Result<_>>()?;
 
-    #[cfg(test)]
-    println!("{:?}", junctions);
-
     let edges = build_edges(&junctions);
     let mut dsu = DisjointSetUnion::new(junctions.len());
     let mut edges_used = 0;
@@ -164,12 +161,44 @@ fn part1(contents: &str, target_connections: usize) -> anyhow::Result<usize> {
     Ok(component_size[0] * component_size[1] * component_size[2])
 }
 
+/// Connect all the closest unconnected pairs of junction boxes together until they're all in one
+/// circuit, then return the product of the X coordinates of the last two junction boxes needs to
+/// connect.
+fn part2(contents: &str) -> anyhow::Result<usize> {
+    let junctions: Vec<Junction> = contents
+        .trim()
+        .lines()
+        .map(str::parse)
+        .collect::<anyhow::Result<_>>()?;
+
+    let edges = build_edges(&junctions);
+    let mut dsu = DisjointSetUnion::new(junctions.len());
+    let mut connections = 0;
+    for edge in edges {
+        if dsu.union(edge.source, edge.target) {
+            connections += 1;
+            // continue until all are connected
+            if connections == junctions.len() - 1 {
+                let a = junctions[edge.source].position.x;
+                let b = junctions[edge.target].position.x;
+                return Ok(a * b);
+            }
+        }
+    }
+    unreachable!("graph should be connected")
+}
+
 fn main() -> anyhow::Result<()> {
     let contents = std::fs::read_to_string("./data/day-08-input.txt")?;
 
     /* Part 1 */
     let component_size_sum = part1(&contents, 1000)?;
     println!("Part 1: {}", component_size_sum);
+
+    /* Part 2 */
+    let component_size_sum = part2(&contents)?;
+    println!("Part 2: {}", component_size_sum);
+
     Ok(())
 }
 
@@ -201,5 +230,31 @@ mod test {
 984,92,344
 425,690,689";
         assert_eq!(part1(input, 10).unwrap(), 40)
+    }
+
+    #[test]
+    fn test_part2_example() {
+        let input = "
+162,817,812
+57,618,57
+906,360,560
+592,479,940
+352,342,300
+466,668,158
+542,29,236
+431,825,988
+739,650,466
+52,470,668
+216,146,977
+819,987,18
+117,168,530
+805,96,715
+346,949,466
+970,615,88
+941,993,340
+862,61,35
+984,92,344
+425,690,689";
+        assert_eq!(part2(input).unwrap(), 25272)
     }
 }
