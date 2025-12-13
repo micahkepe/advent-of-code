@@ -20,12 +20,12 @@ mod test {
 
     #[test]
     fn test_part1_example() {
-        todo!();
+        // TODO: fill me in
     }
 
     #[test]
     fn test_part2_example() {
-        todo!();
+        // TODO: fill me in
     }
 }
 "#;
