@@ -12,7 +12,7 @@
 | [Day 6](https://adventofcode.com/2025/day/6)   | [`day_06.rs`](./src/bin/day_06.rs) |
 | [Day 7](https://adventofcode.com/2025/day/7)   | [`day_07.rs`](./src/bin/day_07.rs) |
 | [Day 8](https://adventofcode.com/2025/day/8)   | [`day_08.rs`](./src/bin/day_08.rs) |
-| [Day 9](https://adventofcode.com/2025/day/9)   |                                    |
+| [Day 9](https://adventofcode.com/2025/day/9)   | [`day_09.rs`](./src/bin/day_09.rs) |
 | [Day 10](https://adventofcode.com/2025/day/10) |                                    |
 | [Day 11](https://adventofcode.com/2025/day/11) |                                    |
 | [Day 12](https://adventofcode.com/2025/day/12) |                                    |
