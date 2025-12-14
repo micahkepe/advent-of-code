@@ -81,10 +81,34 @@ fn detect_year_from_cwd(current_year: u16) -> Option<u16> {
         .filter(|year| (AOC_YEAR_START..=current_year).contains(year))
 }
 
+/// Fetches the specified day-year data from adventofcode.com.
+async fn get_day_year_data(day: u8, year: u16) -> anyhow::Result<String> {
+    let _ = dotenvy::dotenv();
+    let session_cookie =
+        env::var("AOC_SESSION_COOKIE").context("need to set AOC_SESSION_COOKIE")?;
+    let cookie_header = if session_cookie.starts_with("session=") {
+        session_cookie
+    } else {
+        format!("session={}", session_cookie)
+    };
+    let url = format!("https://adventofcode.com/{year}/day/{day}/input");
+    let client = reqwest::Client::new();
+    let res = client
+        .get(url)
+        .header("cookie", cookie_header)
+        .send()
+        .await?;
+    match res.error_for_status() {
+        Ok(res) => Ok(res.text().await?),
+        Err(e) => anyhow::bail!("Session cookie may be expired: {}", e),
+    }
+}
+
 /**
 Entry point.
 */
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let now = time::SystemTime::now();
     let args = Args::parse();
 
@@ -139,9 +163,13 @@ fn main() -> anyhow::Result<()> {
             data_file.display()
         )
     } else {
-        // TODO: fetch the data from the AoC API and populate
-        std::fs::write(&data_file, "")?;
-        log::info!("Created {}", data_file.display());
+        match get_day_year_data(day, year).await {
+            Ok(data_contents) => {
+                std::fs::write(&data_file, &data_contents)?;
+                log::info!("Created {}", data_file.display());
+            }
+            Err(e) => log::error!("Failed to fetch data for {:02}-{}: {}", day, year, e),
+        }
     }
 
     log::info!("Completed in {:.2} seconds", now.elapsed()?.as_secs_f64());

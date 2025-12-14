@@ -26,3 +26,7 @@ Cargo.lock
 # > or your inputs. If you're making a website, please don't make it look like
 # > Advent of Code or name it something similar.
 **/*/data/
+
+# Environment variables
+.env
+
