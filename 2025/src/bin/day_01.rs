@@ -6,7 +6,9 @@ fn position_change(input: &str) -> anyhow::Result<isize> {
     match input.chars().next() {
         Some('L') => sign *= -1,
         Some('R') => (),
-        Some(_) | None => return Err(anyhow::anyhow!("unexpected input line: {}", input)),
+        Some(_) | None => {
+            return Err(anyhow::anyhow!("unexpected input line: {}", input));
+        }
     };
 
     let change: isize = input[1..]

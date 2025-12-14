@@ -84,8 +84,8 @@ fn detect_year_from_cwd(current_year: u16) -> Option<u16> {
 /// Fetches the specified day-year data from adventofcode.com.
 async fn get_day_year_data(day: u8, year: u16) -> anyhow::Result<String> {
     let _ = dotenvy::dotenv();
-    let session_cookie =
-        env::var("AOC_SESSION_COOKIE").context("need to set AOC_SESSION_COOKIE")?;
+    let session_cookie = env::var("AOC_SESSION_COOKIE")
+        .context("need to set AOC_SESSION_COOKIE")?;
     let cookie_header = if session_cookie.starts_with("session=") {
         session_cookie
     } else {
@@ -93,11 +93,7 @@ async fn get_day_year_data(day: u8, year: u16) -> anyhow::Result<String> {
     };
     let url = format!("https://adventofcode.com/{year}/day/{day}/input");
     let client = reqwest::Client::new();
-    let res = client
-        .get(url)
-        .header("cookie", cookie_header)
-        .send()
-        .await?;
+    let res = client.get(url).header("cookie", cookie_header).send().await?;
     match res.error_for_status() {
         Ok(res) => Ok(res.text().await?),
         Err(e) => anyhow::bail!("Session cookie may be expired: {}", e),
@@ -112,9 +108,7 @@ async fn main() -> anyhow::Result<()> {
     let now = time::SystemTime::now();
     let args = Args::parse();
 
-    env_logger::builder()
-        .filter_level(log::LevelFilter::Trace)
-        .init();
+    env_logger::builder().filter_level(log::LevelFilter::Trace).init();
 
     let day = args.day;
     let current_year = jiff::Zoned::now().year() as u16;
@@ -122,7 +116,11 @@ async fn main() -> anyhow::Result<()> {
     let year = if let Some(year) = args.year {
         let valid_years = RangeInclusive::new(AOC_YEAR_START, current_year);
         if !valid_years.contains(&year) {
-            anyhow::bail!("Invalid year: '{}'. Needs to be in {:?}", year, valid_years);
+            anyhow::bail!(
+                "Invalid year: '{}'. Needs to be in {:?}",
+                year,
+                valid_years
+            );
         }
         year
     } else {
@@ -135,8 +133,10 @@ async fn main() -> anyhow::Result<()> {
     let src_bin_dir = year_dir.join("src").join("bin");
     let data_dir = year_dir.join("data");
 
-    std::fs::create_dir_all(&src_bin_dir).context("Failed to create src/bin directory")?;
-    std::fs::create_dir_all(&data_dir).context("Failed to create data directory")?;
+    std::fs::create_dir_all(&src_bin_dir)
+        .context("Failed to create src/bin directory")?;
+    std::fs::create_dir_all(&data_dir)
+        .context("Failed to create data directory")?;
 
     let day_file = src_bin_dir.join(format!("day_{:02}.rs", day));
     let data_file = data_dir.join(format!("day-{:02}-input.txt", day));
@@ -168,7 +168,12 @@ async fn main() -> anyhow::Result<()> {
                 std::fs::write(&data_file, &data_contents)?;
                 log::info!("Created {}", data_file.display());
             }
-            Err(e) => log::error!("Failed to fetch data for {:02}-{}: {}", day, year, e),
+            Err(e) => log::error!(
+                "Failed to fetch data for {:02}-{}: {}",
+                day,
+                year,
+                e
+            ),
         }
     }
 

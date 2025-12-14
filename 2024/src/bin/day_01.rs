@@ -37,7 +37,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut right_list_copy = right_list.clone();
 
     while !left_list_copy.is_empty() {
-        let diff = (left_list_copy.pop().unwrap() - right_list_copy.pop().unwrap()).abs();
+        let diff = (left_list_copy.pop().unwrap()
+            - right_list_copy.pop().unwrap())
+        .abs();
         distance += diff;
     }
 

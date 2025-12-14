@@ -1,18 +1,12 @@
-const DIRS: [(i32, i32); 8] = [
-    (-1, 1),
-    (0, 1),
-    (1, 1),
-    (-1, 0),
-    (1, 0),
-    (-1, -1),
-    (0, -1),
-    (1, -1),
-];
+const DIRS: [(i32, i32); 8] =
+    [(-1, 1), (0, 1), (1, 1), (-1, 0), (1, 0), (-1, -1), (0, -1), (1, -1)];
 
 fn construct_occupied(contents: &str) -> anyhow::Result<Vec<Vec<bool>>> {
     let rows: i32 = contents.trim().lines().count() as i32;
-    let cols: i32 = contents.lines().next().unwrap().trim().chars().count() as i32;
-    let mut occupied: Vec<Vec<bool>> = vec![vec![false; cols as usize]; rows as usize];
+    let cols: i32 =
+        contents.lines().next().unwrap().trim().chars().count() as i32;
+    let mut occupied: Vec<Vec<bool>> =
+        vec![vec![false; cols as usize]; rows as usize];
     for (i, line) in contents.lines().enumerate() {
         for (j, c) in line.chars().enumerate() {
             match c {
@@ -31,7 +25,9 @@ fn construct_occupied(contents: &str) -> anyhow::Result<Vec<Vec<bool>>> {
     Ok(occupied)
 }
 
-fn find_forklift_accessible(occupied: &[Vec<bool>]) -> anyhow::Result<Vec<(usize, usize)>> {
+fn find_forklift_accessible(
+    occupied: &[Vec<bool>],
+) -> anyhow::Result<Vec<(usize, usize)>> {
     let (rows, cols) = (occupied.len() as i32, occupied[0].len() as i32);
     let mut indices: Vec<(usize, usize)> = Vec::new();
     for r in 0..rows {
@@ -58,7 +54,9 @@ fn find_forklift_accessible(occupied: &[Vec<bool>]) -> anyhow::Result<Vec<(usize
     Ok(indices)
 }
 
-fn find_accessible_iterative(mut occupied: Vec<Vec<bool>>) -> anyhow::Result<usize> {
+fn find_accessible_iterative(
+    mut occupied: Vec<Vec<bool>>,
+) -> anyhow::Result<usize> {
     let indices = find_forklift_accessible(&occupied)?;
     let mut last_found = indices.len();
     for (r, c) in indices.iter() {

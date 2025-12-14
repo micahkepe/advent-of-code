@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 
-fn compute_total_beam_splits(contents: &str) -> anyhow::Result<(usize, usize)> {
+fn compute_total_beam_splits(
+    contents: &str,
+) -> anyhow::Result<(usize, usize)> {
     let contents = contents.trim();
     let mut curr_beam_indices: HashSet<usize> = HashSet::new();
     let starting_idx = contents
@@ -72,7 +74,8 @@ fn main() -> anyhow::Result<()> {
     let contents = std::fs::read_to_string("./data/day-07-input.txt")?;
 
     /* Part 1 */
-    let (total_beam_splits, total_beam_combos) = compute_total_beam_splits(&contents)?;
+    let (total_beam_splits, total_beam_combos) =
+        compute_total_beam_splits(&contents)?;
     println!("Part 1: {}", total_beam_splits);
 
     /* Part 2 */

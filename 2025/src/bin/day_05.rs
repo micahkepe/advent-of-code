@@ -42,7 +42,10 @@ fn parse_contents(contents: &str) -> anyhow::Result<ParsedContent> {
         && !line.is_empty()
     {
         if let Some((start, end)) = line.split_once('-') {
-            let range = RangeInclusive::new(start.parse::<usize>()?, end.parse::<usize>()?);
+            let range = RangeInclusive::new(
+                start.parse::<usize>()?,
+                end.parse::<usize>()?,
+            );
             ranges.push(range)
         } else {
             anyhow::bail!("invalid range line: '{}'", line)
@@ -50,9 +53,8 @@ fn parse_contents(contents: &str) -> anyhow::Result<ParsedContent> {
     }
 
     // process IDs
-    let ids: HashSet<usize> = lines_iter
-        .map(|id_str| id_str.trim().parse().unwrap())
-        .collect();
+    let ids: HashSet<usize> =
+        lines_iter.map(|id_str| id_str.trim().parse().unwrap()).collect();
     let parsed = ParsedContent { ranges, ids };
 
     #[cfg(test)]
@@ -61,7 +63,9 @@ fn parse_contents(contents: &str) -> anyhow::Result<ParsedContent> {
     Ok(parsed)
 }
 
-fn merge_intervals(ranges: &[RangeInclusive<usize>]) -> anyhow::Result<Vec<RangeInclusive<usize>>> {
+fn merge_intervals(
+    ranges: &[RangeInclusive<usize>],
+) -> anyhow::Result<Vec<RangeInclusive<usize>>> {
     if ranges.is_empty() {
         return Ok(Vec::new());
     }
@@ -80,7 +84,8 @@ fn merge_intervals(ranges: &[RangeInclusive<usize>]) -> anyhow::Result<Vec<Range
             merged_ranges.push(range.clone());
         } else {
             // merge conflict
-            let last_range = merged_ranges.pop().expect("expected nonempty ranges");
+            let last_range =
+                merged_ranges.pop().expect("expected nonempty ranges");
             let new_start = min(last_range.start(), range.start());
             let new_end = max(last_range.end(), range.end());
             let mod_range = RangeInclusive::new(*new_start, *new_end);
@@ -107,8 +112,11 @@ fn find_fresh_ids(parsed: &ParsedContent) -> anyhow::Result<Vec<usize>> {
 
     // binary search merge ranges for each ID to see if contained
     for id in &parsed.ids {
-        let partition_idx = merged_intervals.partition_point(|range| range.end() < id);
-        if partition_idx < merged_intervals.len() && merged_intervals[partition_idx].contains(id) {
+        let partition_idx =
+            merged_intervals.partition_point(|range| range.end() < id);
+        if partition_idx < merged_intervals.len()
+            && merged_intervals[partition_idx].contains(id)
+        {
             fresh_ids.push(*id);
         }
     }
@@ -127,7 +135,8 @@ fn main() -> anyhow::Result<()> {
 
     /* Part 2 */
     let merged_intervals = merge_intervals(&parsed.ranges)?;
-    let total_fresh_ids: usize = merged_intervals.iter().map(|int| int.clone().count()).sum();
+    let total_fresh_ids: usize =
+        merged_intervals.iter().map(|int| int.clone().count()).sum();
     println!("Part 2: {}", total_fresh_ids);
 
     Ok(())
@@ -146,7 +155,8 @@ mod test {
             RangeInclusive::new(12, 18),
         ];
         let merged = merge_intervals(&ranges).unwrap();
-        let expected = vec![RangeInclusive::new(3, 5), RangeInclusive::new(10, 20)];
+        let expected =
+            vec![RangeInclusive::new(3, 5), RangeInclusive::new(10, 20)];
         assert_eq!(merged, expected);
     }
 

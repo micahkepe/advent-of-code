@@ -67,14 +67,19 @@ fn total_joltage_select_k(contents: &str, k: usize) -> anyhow::Result<usize> {
         let bank = bank.trim();
         let len = bank.len();
         if k >= len {
-            return Err(anyhow::anyhow!("Can not select {k} from {len} elements"));
+            return Err(anyhow::anyhow!(
+                "Can not select {k} from {len} elements"
+            ));
         }
 
         let digits: Vec<char> = bank.chars().collect();
         let mut remaining = len - k;
         let mut stack: Vec<char> = Vec::new(); // pseudo-monotonic stack
         for &digit in &digits {
-            while remaining > 0 && !stack.is_empty() && stack.last().unwrap() < &digit {
+            while remaining > 0
+                && !stack.is_empty()
+                && stack.last().unwrap() < &digit
+            {
                 // found better character and still have budget to remove
                 stack.pop();
                 remaining -= 1;

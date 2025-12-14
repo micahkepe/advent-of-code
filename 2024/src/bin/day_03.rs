@@ -8,7 +8,8 @@ use std::io::{BufRead, BufReader};
 // return the summation of the valid mul instructions
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let file = File::open("data/day_03_input.txt").expect("Input file doesn't exist");
+    let file =
+        File::open("data/day_03_input.txt").expect("Input file doesn't exist");
     let reader = BufReader::new(file);
 
     let re = Regex::new(r"mul\(([1-9][0-9]{0,2}),([1-9][0-9]{0,2})\)")?;

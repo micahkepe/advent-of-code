@@ -44,11 +44,7 @@ fn build_edges(junctions: &[Junction]) -> Vec<Edge> {
             let dist = junctions[i]
                 .position
                 .euclidean_distance(&junctions[j].position);
-            edges.push(Edge {
-                source: i,
-                target: j,
-                dist,
-            });
+            edges.push(Edge { source: i, target: j, dist });
         }
     }
     // sort by distance in ascending order
@@ -145,7 +141,9 @@ fn part1(contents: &str, target_connections: usize) -> anyhow::Result<usize> {
     let mut edges_used = 0;
     for edge in edges {
         edges_used += 1;
-        if dsu.union(edge.source, edge.target) && edges_used == target_connections {
+        if dsu.union(edge.source, edge.target)
+            && edges_used == target_connections
+        {
             break;
         }
     }

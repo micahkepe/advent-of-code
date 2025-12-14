@@ -15,23 +15,23 @@ fn normal_num_parse(contents: &str) -> anyhow::Result<Vec<Vec<usize>>> {
 fn part_1(contents: &str) -> anyhow::Result<Vec<usize>> {
     let num_grid = normal_num_parse(contents)?;
     let mut results = Vec::new();
-    for (col, op) in contents
-        .lines()
-        .last()
-        .unwrap()
-        .split_whitespace()
-        .enumerate()
+    for (col, op) in
+        contents.lines().last().unwrap().split_whitespace().enumerate()
     {
         match op {
-            "+" => results.push(num_grid.iter().fold(0, |acc, row| acc + row[col])),
-            "*" => results.push(num_grid.iter().fold(1, |acc, row| acc * row[col])),
+            "+" => results
+                .push(num_grid.iter().fold(0, |acc, row| acc + row[col])),
+            "*" => results
+                .push(num_grid.iter().fold(1, |acc, row| acc * row[col])),
             _ => anyhow::bail!("unsupported operation: '{}'", op),
         }
     }
     Ok(results)
 }
 
-fn right_left_columnar_parse(contents: &str) -> anyhow::Result<Vec<Vec<usize>>> {
+fn right_left_columnar_parse(
+    contents: &str,
+) -> anyhow::Result<Vec<Vec<usize>>> {
     let rows = contents.lines().count();
     let lines: Vec<&str> = contents.lines().take(rows - 1).collect(); // skip last
 
@@ -108,12 +108,8 @@ fn part_2(contents: &str) -> anyhow::Result<Vec<usize>> {
     let num_grid = right_left_columnar_parse(contents)?;
     let mut results = Vec::new();
 
-    let mut ops: Vec<&str> = contents
-        .lines()
-        .last()
-        .unwrap()
-        .split_whitespace()
-        .collect();
+    let mut ops: Vec<&str> =
+        contents.lines().last().unwrap().split_whitespace().collect();
     ops.reverse();
 
     for (col, op) in ops.iter().enumerate() {

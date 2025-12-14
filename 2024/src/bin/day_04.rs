@@ -2,10 +2,8 @@ use std::error::Error;
 
 fn x_mas_count(fp: &str) -> Result<u32, Box<dyn Error>> {
     let contents = std::fs::read_to_string(fp)?;
-    let grid: Vec<Vec<char>> = contents
-        .lines()
-        .map(|line| line.chars().collect())
-        .collect();
+    let grid: Vec<Vec<char>> =
+        contents.lines().map(|line| line.chars().collect()).collect();
 
     let rows = grid.len();
     let cols = grid[0].len();
