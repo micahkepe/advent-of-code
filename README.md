@@ -12,7 +12,58 @@ My solutions to the [Advent of Code](https://adventofcode.com/) challenges.
 > > or your inputs. If you're making a website, please don't make it look like
 > > Advent of Code or name it something similar.
 
-## [`cargo-xtask` Automation](https://github.com/matklad/cargo-xtask)
+## Setup
+
+1. **Set up your session cookie**
+
+   Copy the example environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Get your session cookie from [adventofcode.com](https://adventofcode.com):
+   - Log in to Advent of Code
+   - Open DevTools (F12)
+   - Go to **Application** &rarr; **Cookies** &rarr; `https://adventofcode.com`
+   - Copy the value of the `session` cookie
+   - Paste it into `.env`:
+
+   ```bash
+   AOC_SESSION_COOKIE=your_session_cookie_here
+   ```
+
+2. **Create a new day**
+
+   ```bash
+   # From project root - creates for current year
+   cargo xtask --day 1
+
+   # From within a year directory (e.g., cd 2025)
+   cargo xtask --day 1
+
+   # Specify a year explicitly
+   cargo xtask --day 1 --year 2024
+   ```
+
+   This will:
+   - Create `src/bin/day_XX.rs` from the template
+   - Fetch and save the puzzle input to `data/day-XX-input.txt`
+
+3. **Run your solution**
+
+   ```bash
+   cd 2025  # or whichever year
+   cargo run --bin day_01
+   ```
+
+4. **Run tests**
+
+   ```bash
+   cargo test --bin day_01
+   ```
+
+## [`cargo-xtask`](https://github.com/matklad/cargo-xtask) Automation
 
 ```
 Automation to create a new day for Advent of Code
@@ -23,6 +74,19 @@ Options:
   -d, --day <INTEGER>  Day number (1..=25)
   -y, --year <YEAR>    Year. Defaults to current year or detected from current directory
   -h, --help           Print help
+```
+
+### Examples
+
+```bash
+# Create day 5 for current year
+cargo xtask --day 5
+
+# Create day 10 for 2024
+cargo xtask --day 10 --year 2024
+
+# Short form
+cargo xtask -d 3 -y 2023
 ```
 
 ## License
