@@ -37,13 +37,13 @@ My solutions to the [Advent of Code](https://adventofcode.com/) challenges.
 
    ```bash
    # From project root - creates for current year
-   cargo xtask --day 1
+   cargo xtask gen --day 1
 
    # From within a year directory (e.g., cd 2025)
-   cargo xtask --day 1
+   cargo xtask gen --day 1
 
    # Specify a year explicitly
-   cargo xtask --day 1 --year 2024
+   cargo xtask gen --day 1 --year 2024
    ```
 
    This will:
@@ -53,7 +53,7 @@ My solutions to the [Advent of Code](https://adventofcode.com/) challenges.
 3. **Run your solution**
 
    ```bash
-   cd 2025  # or whichever year
+   cd <year>
    cargo run --bin day_01
    ```
 
@@ -68,25 +68,45 @@ My solutions to the [Advent of Code](https://adventofcode.com/) challenges.
 ```
 Automation to create a new day for Advent of Code
 
-Usage: xtask [OPTIONS] --day <INTEGER>
+Usage: xtask <COMMAND>
+
+Commands:
+  gen   Generate Rust template file and retrieve puzzle input for specified day and year
+  help  Print this message or the help of the given subcommand(s)
 
 Options:
-  -d, --day <INTEGER>  Day number (1..=25)
-  -y, --year <YEAR>    Year. Defaults to current year or detected from current directory
-  -h, --help           Print help
+  -h, --help  Print help
 ```
+
+<details>
+<summary><code>gen</code> Subcommand</summary>
+
+```
+Automation to create a new day for Advent of Code
+
+Usage: xtask <COMMAND>
+
+Commands:
+gen Generate Rust template file and retrieve puzzle input for specified day and year
+help Print this message or the help of the given subcommand(s)
+
+Options:
+-h, --help Print help
+```
+
+</details>
 
 ### Examples
 
 ```bash
 # Create day 5 for current year
-cargo xtask --day 5
+cargo xtask gen --day 5
 
 # Create day 10 for 2024
-cargo xtask --day 10 --year 2024
+cargo xtask gen --day 10 --year 2024
 
 # Short form
-cargo xtask -d 3 -y 2023
+cargo xtask gen -d 3 -y 2023
 ```
 
 ## License

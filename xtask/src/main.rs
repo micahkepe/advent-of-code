@@ -15,13 +15,14 @@ struct Args {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Generate Rust template file and retrieve puzzle input for specified day and year.
     Gen {
         /// Day number (1..=25).
-        #[arg(short, long, value_name = "INTEGER", value_parser=clap::value_parser!(u8).range(1..=25))]
+        #[arg(short, long, value_name = "DAY", value_parser=clap::value_parser!(u8).range(1..=25))]
         day: u8,
 
         /// Year. Defaults to current year or detected from current directory.
-        #[arg(short, long)]
+        #[arg(short, long, value_name = "YEAR")]
         year: Option<u16>,
     },
 }
