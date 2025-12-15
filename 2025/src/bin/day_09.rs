@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::iter::zip;
 
 const DIRS: [(isize, isize); 8] =
@@ -10,6 +11,7 @@ fn parse_coords(contents: &str) -> anyhow::Result<Vec<(usize, usize)>> {
         .enumerate()
         .map(|(idx, l)| {
             Ok(if let Some((x, y)) = l.split_once(",") {
+                // NOTE: x,y values switched here to match example diagrams
                 (y.parse::<usize>()?, x.parse::<usize>()?)
             } else {
                 anyhow::bail!("Line {} is invalid: {}", idx + 1, l)
@@ -84,31 +86,55 @@ fn flood_fill(grid: &mut [Vec<bool>]) {
 
 /// Maximum area found by constructing a rectangle with at least two corners that are red tiles
 fn max_area_red_green(red_coords: &[(usize, usize)]) -> anyhow::Result<usize> {
-    let (rows, cols) = (
-        red_coords.iter().map(|(x, _)| x).max().expect("no max row value") + 1,
-        red_coords.iter().map(|(_, y)| y).max().expect("no max col value") + 1,
-    );
+    // Coordinate compression: map large sparse coordinates to small dense grid
+    let unique_rows: BTreeSet<usize> =
+        red_coords.iter().map(|(r, _)| *r).collect();
+    let unique_cols: BTreeSet<usize> =
+        red_coords.iter().map(|(_, c)| *c).collect();
 
-    // grid[r][c] -> whether (r, c) is occupied by red or green tile
+    let row_map: Vec<usize> = unique_rows.iter().copied().collect();
+    let col_map: Vec<usize> = unique_cols.iter().copied().collect();
+
+    let rows = row_map.len();
+    let cols = col_map.len();
+
+    #[cfg(test)]
+    eprintln!("Compressed grid: {} x {} = {} cells", rows, cols, rows * cols);
+
+    // Map original coords to compressed coords
+    let compressed: Vec<(usize, usize)> = red_coords
+        .iter()
+        .map(|(r, c)| {
+            let cr = row_map.binary_search(r).unwrap();
+            let cc = col_map.binary_search(c).unwrap();
+            (cr, cc)
+        })
+        .collect();
+
+    // Build compressed grid
     let mut grid = vec![vec![false; cols]; rows];
-    for (r, c) in red_coords {
+    for (r, c) in &compressed {
         grid[*r][*c] = true;
     }
 
-    // connect all coordinates with straight lines of green tiles
+    // Connect consecutive tiles with lines in compressed space
     let mut second_iter: Vec<&(usize, usize)> =
-        red_coords.iter().skip(1).collect();
-    second_iter.push(&red_coords[0]);
+        compressed.iter().skip(1).collect();
+    second_iter.push(&compressed[0]);
 
-    for (a, b) in zip(red_coords, second_iter) {
+    for (a, b) in zip(&compressed, second_iter) {
         if a.0 == b.0 {
             let row = a.0;
             let (start_col, end_col) = (a.1.min(b.1), b.1.max(a.1));
-            (start_col..=end_col).for_each(|col| grid[row][col] = true);
+            (start_col..=end_col).for_each(|col| {
+                grid[row][col] = true;
+            });
         } else if a.1 == b.1 {
             let col = a.1;
             let (start_row, end_row) = (a.0.min(b.0), b.0.max(a.0));
-            (start_row..=end_row).for_each(|row| grid[row][col] = true);
+            (start_row..=end_row).for_each(|row| {
+                grid[row][col] = true;
+            });
         } else {
             anyhow::bail!(
                 "cannot connect points in straight line: {:?} {:?}",
@@ -118,73 +144,36 @@ fn max_area_red_green(red_coords: &[(usize, usize)]) -> anyhow::Result<usize> {
         }
     }
 
-    #[cfg(test)]
-    {
-        println!("Flood filled grid:");
-        (0..rows).for_each(|r| {
-            let mut row = String::new();
-            (0..cols).for_each(|c| {
-                if red_coords.contains(&(r, c)) {
-                    row.push('#');
-                } else if grid[r][c] {
-                    row.push('X');
-                } else {
-                    row.push('.');
-                }
-            });
-            println!("{}", row)
-        });
-    }
-
-    // flood fill
+    // Flood fill in compressed space
     flood_fill(&mut grid);
 
-    #[cfg(test)]
-    {
-        println!("Flood filled grid:");
-        (0..rows).for_each(|r| {
-            let mut row = String::new();
-            (0..cols).for_each(|c| {
-                if red_coords.contains(&(r, c)) {
-                    row.push('#');
-                } else if grid[r][c] {
-                    row.push('X');
-                } else {
-                    row.push('.');
-                }
-            });
-            println!("{}", row)
-        });
-    }
-
-    // Naive first pass
-    // go through the squares with two red corners and count number of tiles
+    // For each pair of red corners, check if rectangle is fully occupied
     let mut res = 0;
-    for (i, a) in red_coords.iter().enumerate() {
-        for b in red_coords.iter().skip(i) {
-            let mut count = 0;
-            let (start_row, end_row) = (a.0.min(b.0), b.0.max(a.0));
-            let (start_col, end_col) = (a.1.min(b.1), b.1.max(a.1));
-            let area = (end_row - start_row + 1) * (end_col - start_col + 1);
-            // Skip if this rectangle can't possibly beat our current best
-            if area <= res {
-                continue;
-            }
-            let mut is_fully_filled = true;
+    for (i, &(cr1, cc1)) in compressed.iter().enumerate() {
+        for &(cr2, cc2) in compressed.iter().skip(i) {
+            let (start_row, end_row) = (cr1.min(cr2), cr1.max(cr2));
+            let (start_col, end_col) = (cc1.min(cc2), cc1.max(cc2));
 
+            // Check if all cells in compressed rectangle are occupied
+            let mut fully_occupied = true;
             #[allow(clippy::needless_range_loop)]
             'outer: for r in start_row..=end_row {
                 for c in start_col..=end_col {
-                    if grid[r][c] {
-                        count += 1
-                    } else {
-                        is_fully_filled = false;
+                    if !grid[r][c] {
+                        fully_occupied = false;
                         break 'outer;
                     }
                 }
             }
-            if is_fully_filled {
-                res = res.max(count)
+
+            if fully_occupied {
+                // Calculate actual area in original space
+                let orig_r1 = row_map[start_row];
+                let orig_r2 = row_map[end_row];
+                let orig_c1 = col_map[start_col];
+                let orig_c2 = col_map[end_col];
+                let area = (orig_r2 - orig_r1 + 1) * (orig_c2 - orig_c1 + 1);
+                res = res.max(area);
             }
         }
     }
