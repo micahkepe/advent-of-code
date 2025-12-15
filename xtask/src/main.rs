@@ -1,5 +1,6 @@
 /// xtask for AoC day automation.
 use clap::{Parser, Subcommand};
+use owo_colors::OwoColorize;
 use std::time;
 
 mod generate;
@@ -38,7 +39,10 @@ async fn main() -> anyhow::Result<()> {
         Commands::Gen { day, year } => generate::generate(day, year).await?,
     }
 
-    log::info!("Completed in {:.2} seconds", now.elapsed()?.as_secs_f64());
+    log::info!(
+        "Completed in {:.2} seconds ✨",
+        now.elapsed()?.as_secs_f64().green()
+    );
 
     Ok(())
 }

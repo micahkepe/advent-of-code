@@ -1,5 +1,6 @@
 /// Generate code template and fetch associated puzzle data.
 use anyhow::Context;
+use owo_colors::OwoColorize;
 use std::{env, fs, ops::RangeInclusive, path::PathBuf};
 
 /// Starting year for AoC.
@@ -50,10 +51,10 @@ fn find_year_dir(year: u16) -> anyhow::Result<PathBuf> {
         }
     }
 
-    anyhow::bail!(
+    anyhow::bail!(format!(
         "Could not find directory for year {}, first run `cargo new --bin <YEAR>` from the root of the project",
-        year
-    )
+        year.yellow()
+    ))
 }
 
 /// Detects the year from current directory, if possible.
@@ -94,8 +95,8 @@ pub async fn generate(day: u8, year: Option<u16>) -> anyhow::Result<()> {
         if !valid_years.contains(&year) {
             anyhow::bail!(
                 "Invalid year: '{}'. Needs to be in {:?}",
-                year,
-                valid_years
+                year.yellow(),
+                valid_years.cyan()
             );
         }
         year
