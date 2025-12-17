@@ -1,19 +1,46 @@
 use anyhow::Context;
-use std::str::FromStr;
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashSet},
+    str::FromStr,
+};
 
 #[derive(Debug)]
 struct Machine {
-    /// Bitmask of lights currently on
-    lights: u16,
+    /// Bitmask of the target light pattern
+    target: u16,
     /// Button wiring schematics
-    wirings: Vec<u16>,
+    toggles: Vec<u16>,
     /// Joltage requirements
     joltages: Vec<u16>,
 }
 
 impl Machine {
     fn min_button_presses(&self) -> anyhow::Result<usize> {
-        Ok(0)
+        let mut visited: HashSet<u16> = HashSet::new();
+
+        // NOTE: this is a max-heap by default, use Reverse
+        let mut heap = BinaryHeap::new();
+        heap.push((Reverse(0), 0u16));
+
+        while let Some(entry) = heap.pop() {
+            let (ops, curr) = entry;
+            if curr == self.target {
+                return Ok(ops.0);
+            }
+            if visited.contains(&curr) {
+                continue; // were able to reach in less ops
+            }
+            visited.insert(curr);
+            for toggle in &self.toggles {
+                let curr = curr ^ toggle;
+                heap.push((Reverse(ops.0 + 1), curr));
+            }
+        }
+
+        println!("visited: {:?}", visited);
+
+        anyhow::bail!("Target not reachable with given toggles:\n{}", self)
     }
 }
 
@@ -48,6 +75,7 @@ impl FromStr for Machine {
 
         // wirings
         let mut wirings = Vec::new();
+        let n = diagram.len() - 2;
         while let Some(wiring) =
             parts.next_if(|w| w.starts_with('(') && w.ends_with(')'))
         {
@@ -60,8 +88,9 @@ impl FromStr for Machine {
                 })
                 .collect::<anyhow::Result<Vec<usize>>>()?;
             for idx in btns {
-                let mask = 1 << idx;
-                schematic |= mask;
+                // Use LSB-first encoding for indexing
+                let bit = n - 1 - idx;
+                schematic |= 1 << bit;
             }
             wirings.push(schematic);
         }
@@ -86,16 +115,16 @@ impl FromStr for Machine {
             anyhow::bail!("too many parts")
         }
 
-        Ok(Machine { lights, wirings, joltages })
+        Ok(Machine { target: lights, toggles: wirings, joltages })
     }
 }
 
 impl std::fmt::Display for Machine {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let n = self.joltages.len();
-        writeln!(f, "Diagram:  {:0>width$b}", self.lights, width = n)?;
+        writeln!(f, "Diagram:  {:0>width$b}", self.target, width = n)?;
         writeln!(f, "Toggles:")?;
-        for toggle in &self.wirings {
+        for toggle in &self.toggles {
             writeln!(f, "\t  {:0>width$b}", toggle, width = n)?
         }
         writeln!(f, "Joltages: {:?}", self.joltages)?;
@@ -139,6 +168,11 @@ mod test {
 [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
             ";
         let machines = parse_input(input).unwrap();
+        // Press last 2 buttons:
+        //
+        //       start: [....]
+        // press (0,2): [#.#.]
+        // press (0,1): [.##.] == [.##.]
         assert_eq!(compute_min_button_presses(&machines).unwrap(), 2)
     }
 
@@ -148,6 +182,12 @@ mod test {
 [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
             ";
         let machines = parse_input(input).unwrap();
+        // Press ((0,4), (0,1,2), and (1,2,3,4))
+        //
+        //     start:   [.....]
+        //     (0,4):   [#...#]
+        //   (0,1,2):   [.##.#]
+        // (1,2,3,4):   [...#.] == [...#.]
         assert_eq!(compute_min_button_presses(&machines).unwrap(), 3)
     }
 
@@ -157,6 +197,11 @@ mod test {
 [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
             ";
         let machines = parse_input(input).unwrap();
+        // Press (0,3,4) and (0,1,2,4,5)
+        //
+        //       start: [......]
+        //     (0,3,4): [#..##.]
+        // (0,1,2,4,5): [.###.#] == [.###.#]
         assert_eq!(compute_min_button_presses(&machines).unwrap(), 2)
     }
 
