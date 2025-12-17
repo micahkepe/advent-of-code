@@ -1,6 +1,5 @@
-use std::str::FromStr;
-
 use anyhow::Context;
+use std::str::FromStr;
 
 #[derive(Debug)]
 struct Machine {
@@ -81,6 +80,8 @@ impl FromStr for Machine {
             })
             .collect::<anyhow::Result<Vec<u16>>>()?;
 
+        assert_eq!(joltages.len(), diagram.len() - 2);
+
         if parts.next().is_some() {
             anyhow::bail!("too many parts")
         }
@@ -89,17 +90,25 @@ impl FromStr for Machine {
     }
 }
 
+impl std::fmt::Display for Machine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let n = self.joltages.len();
+        writeln!(f, "Diagram:  {:0>width$b}", self.lights, width = n)?;
+        writeln!(f, "Toggles:")?;
+        for toggle in &self.wirings {
+            writeln!(f, "\t  {:0>width$b}", toggle, width = n)?
+        }
+        writeln!(f, "Joltages: {:?}", self.joltages)?;
+        Ok(())
+    }
+}
+
 fn parse_input(contents: &str) -> anyhow::Result<Vec<Machine>> {
-    let machines = contents
+    contents
         .trim()
         .lines()
         .map(Machine::from_str)
-        .collect::<anyhow::Result<_>>();
-
-    #[cfg(test)]
-    println!("{:?}", machines);
-
-    machines
+        .collect::<anyhow::Result<_>>()
 }
 
 fn compute_min_button_presses(machines: &[Machine]) -> anyhow::Result<usize> {
@@ -125,6 +134,33 @@ mod test {
     use super::*;
 
     #[test]
+    fn test_part1_example_machine1() {
+        let input = "
+[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+            ";
+        let machines = parse_input(input).unwrap();
+        assert_eq!(compute_min_button_presses(&machines).unwrap(), 2)
+    }
+
+    #[test]
+    fn test_part1_example_machine2() {
+        let input = "
+[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
+            ";
+        let machines = parse_input(input).unwrap();
+        assert_eq!(compute_min_button_presses(&machines).unwrap(), 3)
+    }
+
+    #[test]
+    fn test_part1_example_machine3() {
+        let input = "
+[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
+            ";
+        let machines = parse_input(input).unwrap();
+        assert_eq!(compute_min_button_presses(&machines).unwrap(), 2)
+    }
+
+    #[test]
     fn test_part1_example() {
         let input = "
 [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
@@ -132,6 +168,10 @@ mod test {
 [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
             ";
         let machines = parse_input(input).unwrap();
+        for machine in &machines {
+            println!("{}", machine)
+        }
+        assert_eq!(compute_min_button_presses(&machines).unwrap(), 7)
     }
 
     #[test]
