@@ -1,7 +1,6 @@
 use anyhow::Context;
 use std::{
-    cmp::Reverse,
-    collections::{BinaryHeap, HashSet},
+    collections::{HashSet, VecDeque},
     str::FromStr,
 };
 
@@ -16,17 +15,17 @@ struct Machine {
 }
 
 impl Machine {
-    fn min_button_presses(&self) -> anyhow::Result<usize> {
+    fn min_button_presses_match_target(&self) -> anyhow::Result<usize> {
         let mut visited: HashSet<u16> = HashSet::new();
 
         // NOTE: this is a max-heap by default, use Reverse
-        let mut heap = BinaryHeap::new();
-        heap.push((Reverse(0), 0u16));
+        let mut queue = VecDeque::new();
+        queue.push_back((0usize, 0u16));
 
-        while let Some(entry) = heap.pop() {
+        while let Some(entry) = queue.pop_front() {
             let (ops, curr) = entry;
             if curr == self.target {
-                return Ok(ops.0);
+                return Ok(ops);
             }
             if visited.contains(&curr) {
                 continue; // were able to reach in less ops
@@ -34,13 +33,18 @@ impl Machine {
             visited.insert(curr);
             for toggle in &self.toggles {
                 let curr = curr ^ toggle;
-                heap.push((Reverse(ops.0 + 1), curr));
+                queue.push_back((ops + 1, curr));
             }
         }
 
-        println!("visited: {:?}", visited);
-
         anyhow::bail!("Target not reachable with given toggles:\n{}", self)
+    }
+
+    fn min_button_presses_match_joltages(&self) -> anyhow::Result<usize> {
+        // TODO: use packed integer representation for state
+        unimplemented!()
+
+        //anyhow::bail!("Target not reachable with given toggles:\n{}", self)
     }
 }
 
@@ -140,9 +144,30 @@ fn parse_input(contents: &str) -> anyhow::Result<Vec<Machine>> {
         .collect::<anyhow::Result<_>>()
 }
 
+/// Compute the minimum number of presses of the toggles to achieve the machine's lighting diagram.
+/// Initially, all lights are off.
+///
+///  # Errors
+///
+/// If the end state is not possible.
 fn compute_min_button_presses(machines: &[Machine]) -> anyhow::Result<usize> {
     machines.iter().try_fold(0usize, |acc, machine| {
-        Ok(acc + machine.min_button_presses()?)
+        Ok(acc + machine.min_button_presses_match_target()?)
+    })
+}
+
+/// Sum the number of minimum presses required for each machine to achieve the exact its exact
+/// joltages, where each toggle represents the lights whose joltages will be incremented by 1.
+/// Initially, all lights are off.
+///
+/// # Errors
+///
+/// If the end state is not possible.
+fn compute_min_presses_to_match_joltages(
+    machines: &[Machine],
+) -> anyhow::Result<usize> {
+    machines.iter().try_fold(0usize, |acc, machine| {
+        Ok(acc + machine.min_button_presses_match_joltages()?)
     })
 }
 
@@ -154,6 +179,7 @@ fn main() -> anyhow::Result<()> {
     println!("Part 1: {}", compute_min_button_presses(&machines)?);
 
     /* Part 2 */
+    println!("Part 2: {}", compute_min_presses_to_match_joltages(&machines)?);
 
     Ok(())
 }
@@ -213,14 +239,56 @@ mod test {
 [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
             ";
         let machines = parse_input(input).unwrap();
-        for machine in &machines {
-            println!("{}", machine)
-        }
         assert_eq!(compute_min_button_presses(&machines).unwrap(), 7)
     }
 
     #[test]
+    fn test_part2_example_machine1() {
+        let input = "
+[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+            ";
+        let machines = parse_input(input).unwrap();
+        assert_eq!(
+            compute_min_presses_to_match_joltages(&machines).unwrap(),
+            10
+        )
+    }
+
+    #[test]
+    fn test_part2_example_machine2() {
+        let input = "
+[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
+            ";
+        let machines = parse_input(input).unwrap();
+        assert_eq!(
+            compute_min_presses_to_match_joltages(&machines).unwrap(),
+            12
+        )
+    }
+
+    #[test]
+    fn test_part2_example_machine3() {
+        let input = "
+[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
+            ";
+        let machines = parse_input(input).unwrap();
+        assert_eq!(
+            compute_min_presses_to_match_joltages(&machines).unwrap(),
+            11
+        )
+    }
+
+    #[test]
     fn test_part2_example() {
-        // TODO: fill me in
+        let input = "
+[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
+[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
+            ";
+        let machines = parse_input(input).unwrap();
+        assert_eq!(
+            compute_min_presses_to_match_joltages(&machines).unwrap(),
+            33
+        )
     }
 }
