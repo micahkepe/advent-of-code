@@ -109,6 +109,34 @@ cargo xtask gen --day 10 --year 2024
 cargo xtask gen -d 3 -y 2023
 ```
 
+## Benchmarking
+
+You can use the following to do a rough one trial time for all solutions for a
+given year:
+
+```fish
+pushd 2025
+for f in src/bin/*
+ time cargo run -r --bin (basename -s ".rs" $f)
+end;
+popd
+```
+
+```
+#     Finished `release` profile [optimized] target(s) in 0.07s
+#      Running `/Users/micahkepe/coding/advent-of-code/target/release/day_01`
+#
+# ________________________________________________________
+# Executed in  333.54 millis    fish           external
+#    usr time   56.10 millis    0.47 millis   55.62 millis
+#    sys time   48.59 millis    1.67 millis   46.91 millis
+#
+#     Finished `release` profile [optimized] target(s) in 0.02s
+#      Running `/Users/micahkepe/coding/advent-of-code/target/release/day_02`
+#
+# ...
+```
+
 ## License
 
 Licensed under MIT license, see [LICENSE](LICENSE).
