@@ -41,10 +41,42 @@ impl Machine {
     }
 
     fn min_button_presses_match_joltages(&self) -> anyhow::Result<usize> {
-        // TODO: use packed integer representation for state
-        unimplemented!()
+        let n = self.joltages.len();
+        let mut visited = HashSet::new();
+        let mut queue = VecDeque::new();
 
-        //anyhow::bail!("Target not reachable with given toggles:\n{}", self)
+        queue.push_back((0usize, vec![0u16; n]));
+        while let Some((presses, current)) = queue.pop_front() {
+            if current == self.joltages {
+                return Ok(presses);
+            }
+
+            if visited.contains(&current) {
+                continue;
+            }
+            visited.insert(current.clone());
+
+            for &toggle in &self.toggles {
+                let mut next = current.clone();
+                (0..n).for_each(|i| {
+                    let bit_pos = n - 1 - i;
+                    if ((toggle >> bit_pos) & 1) == 1 {
+                        next[i] += 1
+                    }
+                });
+
+                // early stop if any joltage exceeds specified
+                if next
+                    .iter()
+                    .zip(&self.joltages)
+                    .all(|(curr, target)| curr <= target)
+                {
+                    queue.push_back((presses + 1, next));
+                }
+            }
+        }
+
+        anyhow::bail!("Target not reachable with given toggles:\n{}", self)
     }
 }
 
