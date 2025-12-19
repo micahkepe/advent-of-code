@@ -40,7 +40,11 @@ impl Machine {
         anyhow::bail!("Target not reachable with given toggles:\n{}", self)
     }
 
-    fn min_button_presses_match_joltages(&self) -> anyhow::Result<usize> {
+    /// First attempt: too slow on large input
+    #[allow(dead_code)]
+    fn min_button_presses_match_joltages_naive_bfs(
+        &self,
+    ) -> anyhow::Result<usize> {
         let n = self.joltages.len();
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
@@ -71,6 +75,86 @@ impl Machine {
                     .zip(&self.joltages)
                     .all(|(curr, target)| curr <= target)
                 {
+                    queue.push_back((presses + 1, next));
+                }
+            }
+        }
+        anyhow::bail!("Target not reachable with given toggles:\n{}", self)
+    }
+
+    fn min_button_presses_match_joltages(&self) -> anyhow::Result<usize> {
+        let n = self.joltages.len();
+        let max_joltage = *self.joltages.iter().max().expect("no joltages");
+
+        // use extra bit to prevent overflow in search space
+        let bits_per_value =
+            ((16 - max_joltage.leading_zeros()) as usize).max(5);
+
+        if n * bits_per_value > 64 {
+            anyhow::bail!("Can't pack joltages into u64: {:?}", self.joltages);
+        }
+
+        let target_limits: Vec<u64> =
+            self.joltages.iter().map(|&j| j as u64).collect();
+
+        #[cfg(test)]
+        {
+            eprintln!(
+                "n={}, max_joltage={}, bits_per_value={}",
+                n, max_joltage, bits_per_value
+            );
+            eprintln!("Target joltages: {:?}", self.joltages);
+        }
+
+        let value_mask = (1u64 << bits_per_value) - 1;
+
+        let target_state =
+            self.joltages.iter().enumerate().fold(0u64, |acc, (i, &j)| {
+                acc | (j as u64) << (i * bits_per_value)
+            });
+
+        let toggle_deltas: Vec<u64> = self
+            .toggles
+            .iter()
+            .map(|&toggle| {
+                let mut delta = 0u64;
+                (0..n).for_each(|i| {
+                    let bit_pos = n - 1 - i;
+                    if ((toggle >> bit_pos) & 1) == 1 {
+                        delta |= 1u64 << (i * bits_per_value);
+                    }
+                });
+                delta
+            })
+            .collect();
+
+        let add_packed = |state: u64, delta: u64| -> Option<u64> {
+            let mut res = 0u64;
+            for i in 0..n {
+                let shift = i * bits_per_value;
+                let a = (state >> shift) & value_mask;
+                let b = (delta >> shift) & value_mask;
+                let sum = a + b;
+                if sum > target_limits[i] {
+                    return None;
+                }
+                res |= sum << shift;
+            }
+            Some(res)
+        };
+
+        let mut visited = HashSet::new();
+        let mut queue = VecDeque::new(); // (ops, state) entries
+        queue.push_back((0usize, 0u64));
+        while let Some((presses, state)) = queue.pop_front() {
+            if state == target_state {
+                return Ok(presses);
+            }
+            if !visited.insert(state) {
+                continue;
+            }
+            for &delta in &toggle_deltas {
+                if let Some(next) = add_packed(state, delta) {
                     queue.push_back((presses + 1, next));
                 }
             }
