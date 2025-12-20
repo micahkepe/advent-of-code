@@ -1,3 +1,4 @@
+// See: https://www.reddit.com/r/adventofcode/comments/1pp98cr/2025_day_10_part_2_solution_without_using_a_3rd/
 use anyhow::Context;
 use std::{
     collections::{HashSet, VecDeque},
@@ -17,8 +18,6 @@ struct Machine {
 impl Machine {
     fn min_button_presses_match_target(&self) -> anyhow::Result<usize> {
         let mut visited: HashSet<u16> = HashSet::new();
-
-        // NOTE: this is a max-heap by default, use Reverse
         let mut queue = VecDeque::new();
         queue.push_back((0usize, 0u16));
 
@@ -82,7 +81,10 @@ impl Machine {
         anyhow::bail!("Target not reachable with given toggles:\n{}", self)
     }
 
-    fn min_button_presses_match_joltages(&self) -> anyhow::Result<usize> {
+    #[allow(dead_code)]
+    fn min_button_presses_match_joltages_packed_u64(
+        &self,
+    ) -> anyhow::Result<usize> {
         let n = self.joltages.len();
         let max_joltage = *self.joltages.iter().max().expect("no joltages");
 
@@ -130,12 +132,12 @@ impl Machine {
 
         let add_packed = |state: u64, delta: u64| -> Option<u64> {
             let mut res = 0u64;
-            for i in 0..n {
+            for (i, limit) in target_limits.iter().enumerate().take(n) {
                 let shift = i * bits_per_value;
                 let a = (state >> shift) & value_mask;
                 let b = (delta >> shift) & value_mask;
                 let sum = a + b;
-                if sum > target_limits[i] {
+                if sum > *limit {
                     return None;
                 }
                 res |= sum << shift;
@@ -161,6 +163,17 @@ impl Machine {
         }
 
         anyhow::bail!("Target not reachable with given toggles:\n{}", self)
+    }
+
+    /// Uses [Gaussian elimination] to efficiently find the minimum
+    /// toggle presses required.
+    ///
+    /// Givens:
+    /// - m buttons, n lights
+    ///
+    /// [Gaussian elimination]: <https://en.wikipedia.org/wiki/Gaussian_elimination>
+    fn min_button_presses_match_joltages(&self) -> anyhow::Result<usize> {
+        Ok(0)
     }
 }
 
