@@ -81,10 +81,7 @@ impl Machine {
         anyhow::bail!("Target not reachable with given toggles:\n{}", self)
     }
 
-    #[allow(dead_code)]
-    fn min_button_presses_match_joltages_packed_u64(
-        &self,
-    ) -> anyhow::Result<usize> {
+    fn min_button_presses_match_joltages(&self) -> anyhow::Result<usize> {
         let n = self.joltages.len();
         let max_joltage = *self.joltages.iter().max().expect("no joltages");
 
@@ -163,17 +160,6 @@ impl Machine {
         }
 
         anyhow::bail!("Target not reachable with given toggles:\n{}", self)
-    }
-
-    /// Uses [Gaussian elimination] to efficiently find the minimum
-    /// toggle presses required.
-    ///
-    /// Givens:
-    /// - m buttons, n lights
-    ///
-    /// [Gaussian elimination]: <https://en.wikipedia.org/wiki/Gaussian_elimination>
-    fn min_button_presses_match_joltages(&self) -> anyhow::Result<usize> {
-        Ok(0)
     }
 }
 
