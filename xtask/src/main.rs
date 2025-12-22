@@ -25,6 +25,12 @@ enum Commands {
         #[arg(short, long, value_name = "YEAR")]
         year: Option<u16>,
     },
+    // TODO: `Time` subcommand to run time trials of a year's solutions and pretty results to
+    // stdout as formatted Markdown table (use `csv` crate for records, then make custom table
+    // formatter)
+    // - year arg
+    // - trials <INT> option for number of trials
+    // - default timeout of 5 seconds for single day's trial
 }
 
 /**

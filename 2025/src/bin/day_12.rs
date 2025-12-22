@@ -2,19 +2,29 @@ use anyhow::Context;
 
 #[derive(Debug)]
 struct Shape {
+    /// The shape's diagram of its area.
     display: Vec<Vec<bool>>,
 }
 
+impl Shape {}
+
 #[derive(Debug)]
 struct Region {
+    /// The width of the region.
     width: usize,
+    /// The length of the region.
     length: usize,
+    /// The quantities of each shape, where quantities[i] = amount of the ith shape
     quantities: Vec<usize>,
 }
 
 impl Region {
+    /// 2D version of the bin packing problem.
+    ///
+    /// See: <https://en.wikipedia.org/wiki/Bin_packing_problem>
     fn can_fit_shapes(&self, shapes: &[Shape]) -> bool {
-        todo!()
+        let mut grid = vec![vec![false; self.width]; self.length];
+        true
     }
 }
 

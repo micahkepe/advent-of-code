@@ -15,4 +15,10 @@
 | [Day 9](https://adventofcode.com/2025/day/9)   | [`day_09.rs`](./src/bin/day_09.rs) |
 | [Day 10](https://adventofcode.com/2025/day/10) | [`day_10.rs`](./src/bin/day_10.rs) |
 | [Day 11](https://adventofcode.com/2025/day/11) | [`day_11.rs`](./src/bin/day_11.rs) |
-| [Day 12](https://adventofcode.com/2025/day/12) |                                    |
+| [Day 12](https://adventofcode.com/2025/day/12) | [`day_12.rs`](./src/bin/day_12.rs) |
+
+## TODOs
+
+- [ ] Solve day 10 part 2 (current solution is too slow for the original puzzle
+      input)
+- [ ] Solve day 12
