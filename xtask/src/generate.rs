@@ -1,34 +1,15 @@
 /// Generate code template and fetch associated puzzle data.
-use anyhow::Context;
+use anyhow::{Context, bail};
 use owo_colors::OwoColorize;
 use std::{env, fs, ops::RangeInclusive, path::PathBuf};
+
+mod template;
 
 /// Starting year for AoC.
 const AOC_YEAR_START: u16 = 2015;
 
 /// Advent of Code code template
-const TEMPLATE: &str = r#"
-fn main() -> anyhow::Result<()> {
-    let contents = std::fs::read_to_string("./data/day-<DAY>-input.txt")?;
-
-    Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_part1_example() {
-        // TODO: fill me in
-    }
-
-    #[test]
-    fn test_part2_example() {
-        // TODO: fill me in
-    }
-}
-"#;
+const TEMPLATE: &str = include_str!("./generate/template.rs");
 
 /// Finds the path for the specified year, if it exists.
 fn find_year_dir(year: u16) -> anyhow::Result<PathBuf> {
@@ -51,7 +32,7 @@ fn find_year_dir(year: u16) -> anyhow::Result<PathBuf> {
         }
     }
 
-    anyhow::bail!(format!(
+    bail!(format!(
         "Could not find directory for year {}, first run `cargo new --bin <YEAR>` from the root of the project",
         year.yellow()
     ))
